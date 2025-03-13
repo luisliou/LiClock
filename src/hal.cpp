@@ -339,8 +339,6 @@ bool HAL::init()
     bool timeerr = false;
     bool initial = true;
     Serial.begin(115200);
-    setenv("TZ", "CST-8", 1);
-    tzset();
     // 读取时钟偏移
     pref.begin("clock");
     pinMode(PIN_BUTTONR, INPUT);
@@ -449,6 +447,8 @@ bool HAL::init()
         f.close();
     }
     loadConfig();
+    setenv("TZ", config[PARAM_TIMEZONE], 1);
+    tzset();
     weather.begin();
     buzzer.init();
     xTaskCreate(task_hal_update, "hal_update", 2048, NULL, 10, NULL);

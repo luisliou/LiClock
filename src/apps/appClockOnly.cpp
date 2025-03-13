@@ -29,17 +29,29 @@ static AppClockOnly app;
 extern const char *dayOfWeek[];
 void AppClockOnly::setup()
 {
-    int w;
-    char timeStr[6];
-    sprintf(timeStr, "%02d:%02d", hal.timeinfo.tm_hour, hal.timeinfo.tm_min);
+    int x;
+    int wColon, wHour, wMinu;
+    char hourStr[3];
+    char minuStr[3];
+    sprintf(hourStr, "%02d", hal.timeinfo.tm_hour);
+    sprintf(minuStr, "%02d", hal.timeinfo.tm_min);
     display.clearScreen();
     u8g2Fonts.setFontMode(1);
     u8g2Fonts.setForegroundColor(0);
     u8g2Fonts.setBackgroundColor(1);
     u8g2Fonts.setFont(u8g2_font_logisoso92_tn);
-    w = u8g2Fonts.getUTF8Width(timeStr);
-    u8g2Fonts.setCursor((296 - w) / 2, 104);
-    u8g2Fonts.print(timeStr);
+    wColon = u8g2Fonts.getUTF8Width(":");
+    wHour = u8g2Fonts.getUTF8Width(hourStr);
+    x = 296/2 - (wHour + wColon / 2); // half screen width - half text width
+    u8g2Fonts.setCursor(x, 104);
+    u8g2Fonts.print(hourStr);
+    x += wHour; // move cursor to the end of hour text
+    u8g2Fonts.setCursor(x, 104);
+    u8g2Fonts.print(":");
+    wMinu = u8g2Fonts.getUTF8Width(minuStr);
+    x += wColon; // move cursor to the end of colon
+    u8g2Fonts.setCursor(x, 104);
+    u8g2Fonts.print(minuStr);
     u8g2Fonts.setFont(u8g2_font_wqy12_t_gb2312);
     display.drawFastHLine(0, 110, 296, 0);
     u8g2Fonts.setCursor(10, 125);
@@ -56,7 +68,11 @@ void AppClockOnly::setup()
     // 电池
     display.drawXBitmap(296 - 25, 111, getBatteryIcon(), 20, 16, 0);
 
-    if (force_full_update || part_refresh_count > 20)
+    if (!force_full_update) {
+        // force full update every hour
+        force_full_update = (hal.timeinfo.tm_min == 0);
+    }
+    if (force_full_update || part_refresh_count >= 60)
     {
         Serial.printf("force full update:%d\npart_refresh_count:%d\n", force_full_update, part_refresh_count);
         display.display(false);
