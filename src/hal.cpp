@@ -74,13 +74,14 @@ void HAL::loadConfig()
 void HAL::getTime()
 {
     int64_t tmp;
+    bool b12Hour = false, pm = false, century;
     if (peripherals.peripherals_current & PERIPHERALS_DS3231_BIT)
     {
         xSemaphoreTake(peripherals.i2cMutex, portMAX_DELAY);
         timeinfo.tm_year = peripherals.rtc.getYear() + 100;
-        timeinfo.tm_mon = peripherals.rtc.getMonth() - 1;
+        timeinfo.tm_mon = peripherals.rtc.getMonth(century) - 1;
         timeinfo.tm_mday = peripherals.rtc.getDate();
-        timeinfo.tm_hour = peripherals.rtc.getHour();
+        timeinfo.tm_hour = peripherals.rtc.getHour(b12Hour, pm); // Assuming the function requires a boolean argument
         timeinfo.tm_min = peripherals.rtc.getMinute();
         timeinfo.tm_sec = peripherals.rtc.getSecond();
         timeinfo.tm_wday = peripherals.rtc.getDoW() - 1;
@@ -246,9 +247,14 @@ void HAL::ReqWiFiConfig()
         ESP.restart();
     }
 }
-#include "esp_spi_flash.h"
-#include "esp_rom_md5.h"
 #include "esp_partition.h"
+#include "spi_flash_mmap.h"
+#include "esp_flash.h"
+#include "esp_rom_md5.h"
+#include "esp_flash.h"
+#include "esp_partition.h"
+//#undef SNTP_OPMODE_POLL
+//#include "lwip/apps/sntp.h"
 #define PARTITION_TOTAL 4
 #define PARTITIONS_OFFSET 0x8000
 #define PARTITION_SPIFFS (4 - 1)
@@ -256,7 +262,7 @@ void HAL::ReqWiFiConfig()
 void test_littlefs_size(bool format = true)
 {
     uint32_t size_request; // 存储目的分区大小
-    size_t size_physical = 0;
+    uint32_t size_physical = 0;
     esp_flash_get_physical_size(esp_flash_default_chip, &size_physical);
     size_request = size_physical - 0x300000 - 0x1000;
     if (hal.pref.getUInt("size", 0) != size_request)
@@ -278,7 +284,7 @@ void refresh_partition_table()
         uint8_t size_byte[4];
     } partition_size;
     uint32_t size_request; // 存储目的分区大小
-    size_t size_physical = 0;
+    uint32_t size_physical = 0;
     esp_flash_get_physical_size(esp_flash_default_chip, &size_physical);
     if(size_physical <= 0)
     {
@@ -363,7 +369,11 @@ bool HAL::init()
         btn_activelow = true;
     }
 
-    esp_task_wdt_init(portMAX_DELAY, false);
+    esp_task_wdt_config_t wdt_config = {
+        .timeout_ms = portMAX_DELAY,
+        .trigger_panic = false
+    };
+    esp_task_wdt_init(&wdt_config);
     pinMode(PIN_CHARGING, INPUT);
     pinMode(PIN_SD_CARDDETECT, INPUT_PULLUP);
     pinMode(PIN_SDVDD_CTRL, OUTPUT);
@@ -483,7 +493,7 @@ void HAL::autoConnectWiFi()
             hal.ReqWiFiConfig();
         }
     }
-    sntp_stop();
+    //sntp_stop();
 }
 static void set_sleep_set_gpio_interrupt()
 {
@@ -506,7 +516,7 @@ static void pre_sleep()
     display.hibernate();
     buzzer.waitForSleep();
     delay(10);
-    ledcDetachPin(PIN_BUZZER);
+    ledcDetach(PIN_BUZZER);
     digitalWrite(PIN_BUZZER, 0);
 }
 static void wait_display()
@@ -541,7 +551,7 @@ void HAL::goSleep(uint32_t sec)
         esp_light_sleep_start();
         display.init(0, false);
         peripherals.wakeup();
-        ledcAttachPin(PIN_BUZZER, 0);
+        ledcAttach(PIN_BUZZER, 48000, 10);
     }
     else
     {

@@ -2,7 +2,6 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
-#include <SPIFFSEditor.h>
 
 // 下面是引用网页文件
 #include "index.h"
@@ -215,7 +214,7 @@ static void sendreq(AsyncWebServerRequest *request, const char *mime, const uint
     }
     else
     {
-        AsyncWebServerResponse *response = request->beginResponse_P(200, mime, name, len);
+        AsyncWebServerResponse *response = request->beginResponse(200, mime, name, len);
         response->addHeader("Content-Encoding", "gzip");
         response->addHeader("Last-Modified", buildTime);
         request->send(response);
@@ -275,9 +274,9 @@ void beginWebServer()
     server.on("/conf", HTTP_POST, [](AsyncWebServerRequest *request)
               {
                 Serial.println(request->getParam("json", true, false)->value());
-                                deserializeJson(config, request->getParam(0)->value());
-                                request->send(200, "text/plain", "OK");
-                                hal.saveConfig(); });
+                DeserializationError err = deserializeJson(config, request->getParam("json", true, false)->value());
+                request->send(200, "text/plain", "OK");
+                hal.saveConfig(); });
 
     server.on("/poweroff", HTTP_POST, [](AsyncWebServerRequest *request)
               {
@@ -297,7 +296,6 @@ void beginWebServer()
     server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send(200, "text/plain", String(ESP.getFreeHeap())); });
 
-    server.addHandler(new SPIFFSEditor(LittleFS));
     server.on("/rundebug", HTTP_GET, luaExecuteHandler);
     server.on("/terminate", HTTP_GET, luaTerminateHandler);
     server.on("/rmrf", HTTP_POST, rmrfHandler);

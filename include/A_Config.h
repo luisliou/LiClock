@@ -41,7 +41,7 @@
 #define SAMPLE_COUNT 10
 #define SAMPLE_STEP 1
 #define PX_PER_SAMPLE (SCREEN_WIDTH / SAMPLE_STEP / (SAMPLE_COUNT - 2))
-#define DEFAULT_CONFIG "{\"p1\":\"116.3975,39.9091\",\"p2\":\"15\",\"p3\":\"1\",\"p4\":\"23:30\",\"p5\":\"05:00\",\"p6\":\"\",\"p7\":\"\",\"p8\":\"0\",\"p9\":\"CST-8\"}"
+#define DEFAULT_CONFIG "{\"p1\":\"116.3975,39.9091\",\"p2\":\"15\",\"p3\":\"1\",\"p4\":\"23:30\",\"p5\":\"05:00\",\"p6\":\"\",\"p7\":\"\",\"p8\":\"0\",\"p9\":\"CST-8\",\"p10\":\"\"}"
 typedef struct
 {
     const uint8_t *data;
@@ -61,7 +61,7 @@ extern const char *ipv6_to_str(const esp_ip6_addr_t *addr);
 extern void enableIPv6();
 void refreshIPV6Addr();
 
-extern DynamicJsonDocument config;
+extern JsonDocument config;
 extern GxEPD2_BW<GxEPD2_290, GxEPD2_290::HEIGHT> display;
 extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
@@ -80,6 +80,7 @@ extern bool LuaRunning;            //全局变量，表示Lua服务器是否运�
 #define PARAM_PASS "p7"
 #define PARAM_CLOCKONLY "p8"
 #define PARAM_TIMEZONE "p9"
+#define PARAM_SECONDARY_TZ "p10"
 
 void processRain(float max);
 void beginWebServer();
