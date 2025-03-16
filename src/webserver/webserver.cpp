@@ -270,6 +270,11 @@ void beginWebServer()
                                 message += "<br/>USB";
                                 message += hal.USBPluggedIn?"已插入":"未插入";
                                 message += hal.isCharging?"<br/>正在充电":"<br/>未充电";
+                                message += "<br/>RTC修正: 每隔";
+                                message += hal.every;
+                                message += "秒 修正";
+                                message += hal.delta;
+                                message += "秒";
                                 request->send(200, "text/plain", message); });
 
     server.on("/conf", HTTP_POST, [](AsyncWebServerRequest *request)
