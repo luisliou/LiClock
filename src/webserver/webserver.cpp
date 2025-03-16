@@ -2,6 +2,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
+#include <Update.h>
 
 // 下面是引用网页文件
 #include "index.h"
@@ -302,6 +303,40 @@ void beginWebServer()
     server.on("/mkdir", HTTP_POST, mkdirHandler);
     server.on("/rename", HTTP_POST, renameHandler);
     server.on("/createapp", HTTP_POST, createAppHandler);
+    server.on(
+        "/update", HTTP_POST,
+        [](AsyncWebServerRequest *request)
+        {
+            request->send(200, "text/plain", Update.hasError() ? "更新失败!" : "更新成功! 正在重启...");
+            delay(500);
+            ESP.restart();
+        },
+        [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+        {
+            if (!index)
+            {
+                Serial.printf("Updating: %s\n", filename.c_str());
+                if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+                {
+                    Update.printError(Serial);
+                }
+            }
+            if (Update.write(data, len) != len)
+            {
+                Update.printError(Serial);
+            }
+            if (final)
+            {
+                if (Update.end(true))
+                {
+                    Serial.println("Update Success!");
+                }
+                else
+                {
+                    Update.printError(Serial);
+                }
+            }
+        });
     server.begin();
     Serial.println("HTTP server started");
     serverRunning = true;
