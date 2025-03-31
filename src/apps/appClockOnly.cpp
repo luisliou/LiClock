@@ -152,7 +152,6 @@ String AppClockOnly::getSecondaryTime()
     time_t now;
     struct tm timeinfo;
     now = hal.now;
-    time(&now);
     localtime_r(&now, &timeinfo);
     int offset = extractTimezoneInfo(buffer, sizeof(buffer));
 
