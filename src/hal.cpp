@@ -148,6 +148,7 @@ void HAL::WiFiConfigManual()
 #include "img_manual.h"
     String passwd = String((esp_random() % 1000000000L) + 10000000L); // 生成随机密码
     String str = "WIFI:T:WPA2;S:WeatherClock;P:" + passwd + ";;";
+    Serial.println(str);
     WiFi.softAP("WeatherClock", passwd.c_str());
     WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
     dnsServer.start(53, "*", IPAddress(192, 168, 4, 1));

@@ -52,7 +52,7 @@ void setup()
     }
     bool recoverLast = false;
     hal.wakeUpFromDeepSleep = false;
-    if (hal.lastsync == 1)
+    if (hal.lastsync == 1 && config[PARAM_SSID] != "")
     {
         hal.lastsync = 0; // 避免重复进入
         runWifiBackground();
