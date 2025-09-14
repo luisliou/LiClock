@@ -18,30 +18,30 @@
 #include <LittleFS.h>
 #define SCREEN_WIDTH 296
 #define SCREEN_HEIGHT 128
-#define PIN_ADC 33
+#define PIN_ADC 16
 
-#define PIN_BUTTONL 35
-#define PIN_BUTTONC 34
-#define PIN_BUTTONR 39
+#define PIN_BUTTONL 5
+#define PIN_BUTTONC 6
+#define PIN_BUTTONR 1
 
-#define PIN_RTC_IRQ 25
-#define PIN_SDVDD_CTRL 27
-#define PIN_CHARGING 26
-#define PIN_SD_CS 14
-#define PIN_SD_MOSI 12
-#define PIN_SD_SCLK 13
-#define PIN_SD_MISO 15
-#define PIN_SD_CARDDETECT 2
-#define PIN_BUZZER 21
-#define PIN_SDA 23
-#define PIN_SCL 22
+#define PIN_RTC_IRQ 42
+#define PIN_SDVDD_CTRL 21
+#define PIN_CHARGING 7
+#define PIN_SD_CS 47
+#define PIN_SD_MOSI 46
+#define PIN_SD_SCLK 48
+#define PIN_SD_MISO 45
+#define PIN_SD_CARDDETECT 4
+#define PIN_BUZZER 17
+#define PIN_SDA 8
+#define PIN_SCL 15
 
 // 下面这些尽量不要修改，因为改了不完全有效
 #define GRAPH_HEIGHT 37
 #define SAMPLE_COUNT 10
 #define SAMPLE_STEP 1
 #define PX_PER_SAMPLE (SCREEN_WIDTH / SAMPLE_STEP / (SAMPLE_COUNT - 2))
-#define DEFAULT_CONFIG "{\"p1\":\"116.3975,39.9091\",\"p2\":\"15\",\"p3\":\"1\",\"p4\":\"23:30\",\"p5\":\"05:00\",\"p6\":\"\",\"p7\":\"\",\"p8\":\"0\",\"p9\":\"CST-8\",\"p10\":\"\"}"
+#define DEFAULT_CONFIG "{\"p1\":\"11.9746, 57.7089\",\"p2\":\"15\",\"p3\":\"1\",\"p4\":\"23:30\",\"p5\":\"05:00\",\"p6\":\"\",\"p7\":\"\",\"p8\":\"0\",\"p9\":\"CST-8\",\"p10\":\"\"}"
 typedef struct
 {
     const uint8_t *data;

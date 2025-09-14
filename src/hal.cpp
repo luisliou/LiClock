@@ -272,73 +272,6 @@ void test_littlefs_size(bool format = true)
         LittleFS.format();
     }
 }
-void refresh_partition_table()
-{
-    md5_context_t ctx;
-    static uint8_t table[16 * 20];
-    static uint8_t table1[16 * 20];
-    esp_rom_md5_init(&ctx);
-    union
-    {
-        uint32_t size;
-        uint8_t size_byte[4];
-    } partition_size;
-    uint32_t size_request; // 存储目的分区大小
-    uint32_t size_physical = 0;
-    esp_flash_get_physical_size(esp_flash_default_chip, &size_physical);
-    if(size_physical <= 0)
-    {
-        Serial.println("获取Flash大小失败");
-        return;
-    }
-    size_request = size_physical - 0x300000 - 0x1000;
-    esp_flash_read(esp_flash_default_chip, table, 0x8000, sizeof(table));
-    memcpy(partition_size.size_byte, &table[16 * 2 * PARTITION_SPIFFS + 0x8], 4);
-    Serial.printf("当前LittleFS分区大小%d\n期望LittleFS分区大小%d\n", partition_size.size, size_request);
-    if (partition_size.size != size_request)
-    {
-        Serial.printf("正在修改分区表\n");
-        partition_size.size = size_request;
-        memcpy(&table[16 * 2 * PARTITION_SPIFFS + 0x8], partition_size.size_byte, 4);
-        Serial.println("正在计算MD5\n");
-        esp_rom_md5_update(&ctx, table, 16 * 2 * PARTITION_TOTAL);
-        esp_rom_md5_final(&table[16 * (2 * PARTITION_TOTAL + 1)], &ctx);
-        esp_flash_set_chip_write_protect(esp_flash_default_chip, false);
-        Serial.println("\n正在写入");
-        if (esp_flash_erase_region(esp_flash_default_chip, 0x8000, 0x1000) != ESP_OK)
-        {
-            Serial.println("擦除失败");
-            while (1)
-                vTaskDelay(1000);
-        }
-        if (esp_flash_write(esp_flash_default_chip, table, 0x8000, sizeof(table)) != ESP_OK)
-        {
-            Serial.println("写入失败");
-            while (1)
-                vTaskDelay(1000);
-        }
-        Serial.println("完成，正在校验结果");
-        esp_flash_read(esp_flash_default_chip, table1, 0x8000, sizeof(table1));
-        if (memcmp(table, table1, sizeof(table)) != 0)
-        {
-            Serial.println("校验失败");
-            while (1)
-                vTaskDelay(1000);
-        }
-        else
-        {
-            for (size_t i = 0; i < 16 * 12; i++)
-            {
-                Serial.printf("0x%02X ", table[i]);
-                if ((i + 1) % 16 == 0)
-                {
-                    Serial.println();
-                }
-            }
-        }
-        ESP.restart();
-    }
-}
 bool HAL::init()
 {
     int16_t total_gnd = 0;
@@ -402,7 +335,6 @@ bool HAL::init()
     {
         pref.putUInt("size", p->size);
     }
-    refresh_partition_table();
     if (pref.getUInt("lastsync") == 0)
     {
         pref.putUInt("lastsync", 1);  // 上次同步时间的准确时间
@@ -446,9 +378,9 @@ bool HAL::init()
             powerOff(false);
             ESP.restart();
         }
-        test_littlefs_size(false);
+        // test_littlefs_size(false);
     }
-    test_littlefs_size(true);
+    // test_littlefs_size(true);
     if (LittleFS.exists("/config.json") == false)
     {
         Serial.println("正在写入默认配置");
@@ -500,10 +432,13 @@ static void set_sleep_set_gpio_interrupt()
     if (hal.btn_activelow)
     {
         esp_sleep_enable_ext0_wakeup((gpio_num_t)hal._wakeupIO[0], 0);
-        esp_sleep_enable_ext1_wakeup((1LL << hal._wakeupIO[1]), ESP_EXT1_WAKEUP_ALL_LOW);
+        esp_sleep_enable_ext1_wakeup((1LL << hal._wakeupIO[1]), ESP_EXT1_WAKEUP_ANY_LOW);
     }
     else
     {
+        rtc_gpio_pullup_dis((gpio_num_t)PIN_BUTTONC);     // avoid week pullup, sometimes it will wake up continuously
+        rtc_gpio_pullup_dis((gpio_num_t)PIN_BUTTONL);     // avoid week pullup, sometimes it will wake up continuously
+        rtc_gpio_pullup_dis((gpio_num_t)PIN_BUTTONR);     // avoid week pullup, sometimes it will wake up continuously
         esp_sleep_enable_ext1_wakeup((1ULL << PIN_BUTTONC) | (1ULL << PIN_BUTTONL) | (1ULL << PIN_BUTTONR), ESP_EXT1_WAKEUP_ANY_HIGH);
     }
 }

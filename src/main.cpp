@@ -13,10 +13,18 @@ void task_appManager(void *)
         delay(20);
     }
 }
+
+void runWifiBackground()
+{
+    hal.autoConnectWiFi();
+    NTPSync();
+    ESP.restart();
+}
+
+
 #include <LittleFS.h>
 void setup()
 {
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brownout detector
     hal.init();
     alarms.load();
     alarms.check();
@@ -44,6 +52,11 @@ void setup()
     }
     bool recoverLast = false;
     hal.wakeUpFromDeepSleep = false;
+    if (hal.lastsync == 1)
+    {
+        hal.lastsync = 0; // 避免重复进入
+        runWifiBackground();
+    }
     if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED)
     {
         hal.wakeUpFromDeepSleep = true;
